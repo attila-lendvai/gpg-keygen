@@ -33,7 +33,7 @@ identityEmail           = "jd@example.com"
 
 keyType                 = "RSA"                      # DSA is too small
 
-masterKeyLength           = "4096"                   # enlarge your keysize! (gpg can handle 8192+ bit keys once they got generated)
+masterKeyLength           = "8192"                   # enlarge your keysize! (gpg can handle 8192+ bit keys once they got generated)
 masterphraselen           = "5"                      # 5 words is a minimum
 masterKeyExpire           = "0"                      # Master key should never expire
 
@@ -237,9 +237,10 @@ try:
 cert-digest-algo SHA512
 default-preference-list SHA512 SHA384 SHA256 SHA224 AES256 AES192 AES CAST5 ZLIB BZIP2 ZIP Uncompressed""")
 
-    log("Temporary directory for sensitive data will be: '" + workingDirectory + "'. Make sure it's either in a volatile storage, or it's deleted using 'srm' (secure-delete) once it's not needed!")
+    log("Temporary directory for sensitive data will be: '" + workingDirectory + "'. Make sure it's either in a volatile storage (e.g. /run/shm/ on linux), or it's deleted using 'srm' (secure-delete) once it's not needed!")
 
     if args.command == "wholeStory":
+        log("You will repeatedly be asked for passphrases in blocking windows, so it's a good idea to keep the messages in this window visible.")
         generateMasterKey()
         log("Master signing key generated, fingerprint is '%s', details follow.", getMasterKeyFingerprint())
         runGpgWithoutCapturing("--list-secret-keys")
