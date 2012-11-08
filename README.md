@@ -2,15 +2,18 @@
 
 A script to generate PGP keys with GnuPG, following best practices, or at least an approximation thereof.
 
-The aim of this document is to provide concise and up-to-date best practices regarding the usage of [GnuPG](http://www.gnupg.org/). A basic understanding of [public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography), and [GnuPG](http://www.gnupg.org/) in particular is assumed.
+The aim of this document is to provide a concise and up-to-date description of best practices regarding the usage of [GnuPG](http://www.gnupg.org/). A basic understanding of [public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography), and [GnuPG](http://www.gnupg.org/) in particular is assumed.
 
 If something is not clear or you're new to PGP, then make sure to start with the [Glossary](#-glossary) below.
 
+Alternatives to this project and/or further reading: [gpk](https://github.com/stef/gpk), [gpg-quickstart](http://www.madboa.com/geek/gpg-quickstart/), [gnupg howtos](http://www.gnupg.org/documentation/howtos.en.html), [Why use PGP?](http://superuser.com/a/16165/27578).
+
 ## Some quick insights ##
 
-* You cannot delete any change you have made to a PGP key once the change has been published. It's just there forever.
-* Digitally signed revocation requests can be published though. If properly signed, then they will be honored by programs (e.g. key servers, client programs), that will ignore/hide the revoked data accordingly.
-* Having a separately store revocation block in your backups comes very handy if your key gets compromised (this script automatically generates one). By publishing it you can tell your peers that you key should not be used anymore.
+* [Public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography) happens between two encryption **keys**, which is not necessarily only two humans, unless enough care has been taken when exchanging public keys and to keep the secret keys secret.
+* In a digital networked world it's not possible to delete any published information, it must be assumed to be just there forever. This also applies to PGP keys.
+* Properly authenticated revocation requests can be published though. If such requests are [digitally signed](http://en.wikipedia.org/wiki/Digital_signature) (authenticated), then they will be honored by programs using e.g. a PGP key (key servers, client programs), and the revoked data will be ignored/hidden accordingly.
+* Having a separately stored revocation certificate in your backups comes very handy if your key gets compromised. By publishing it you can tell your peers that your key should not be used anymore.
 * The most precious part of a _PGP key block_ is its _master signing key_.
 * The _master signing key_ of a _PGP key block_ is rarely needed (mostly when editing the _PGP key block_ itself and when signing other people's keys, and granted that at least one additional signing subkey exists to sign ordinary documents (this script automatically generates one)).
 * If you don't trust the software environment and/or the computer generating or using your gpg key, then you cannot trust the key and the cryptography either. Use a linux live cd or something similar from a trusted source to generate and/or use your master signing key, preferrably while being offline! E.g. [Tails](http://tails.boum.org/), [Privatix](http://www.mandalka.name/privatix/) or [Liberté Linux](http://dee.su/liberte).
@@ -45,13 +48,13 @@ This script generates:
 * a master signing key
 * a subkey for signing
 * a subkey for encryption
-* an export of the secret part of the master signing key into the file 'secret-master-key.gpg'
-* an export of the secret parts of the subkeys into the file 'secret-subkeys.gpg'
-* an export of the public parts of all the three generated keys into the file 'public-keys.gpg'
-* a symmetrically encrypted revocation certificate into the file 'revocation-certificate-for-[keyid]-passphrase-protected.gpg'
-* (planned: support for ssss-split to generate [secret sharing](http://en.wikipedia.org/wiki/Secret_sharing) to backup the master key and the revocation certificate in a distributed manner)
+* export the secret part of the master signing key into the file <code>secret-master-key.gpg</code>
+* export the secret parts of the two generated subkeys into the file <code>secret-subkeys.gpg</code>
+* export the public parts of all the three generated keys into the file <code>public-keys.gpg</code>
+* generate and symmetrically encrypt a revocation certificate into the file <code>revocation-certificate-for-[keyid]-passphrase-protected.gpg</code>
+* (planned: support for <code>ssss-split</code> to generate [secret sharing](http://en.wikipedia.org/wiki/Secret_sharing) to backup the master key and the revocation certificate in a distributed manner)
 
-Once the files have been generated you can import them into gpg homedir's (the default one is ~/.gnupg). One should be on your regularly used computer(s), but it should only hold the secret parts of the subkeys and the public parts of all the keys (but not the secret part of the master signing key, which should be handled with more precautions):
+Once the files have been generated you can import them into gpg homedir's (the default one is <code>~/.gnupg</code>). One should be on your regularly used computer(s), but it should only hold the secret parts of the subkeys and the public parts of all the keys (but not the secret part of the master signing key, which should be handled with more precautions):
 
         $ gpg --import secret-subkeys.gpg public-keys.gpg
         $ gpg --list-secret-keys
