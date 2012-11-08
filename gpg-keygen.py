@@ -9,18 +9,8 @@
 #
 # Invoke with ./gpg-genkey --help to see usage.
 #
-# generates
-# - three passphrases (for the master and the 2 subkeys)
-# - an RSA 8192 signing master key,
-# - one encryting and one signing subkey
-# - an encrypted revocation cert for the masterkey
-# - the key for the revocation cert in 5 ssss shares
-# - an encrypted copy of the masterkey for backup
-# - the key for the backup in 5 ssss shares
-#
-# depends: gnupg, openssl, ssss, gpgsplit, srm
-# on Debian:
-# sudo apt-get install gnupg secure-delete ssss
+# To install dependencies on Debian run:
+# sudo apt-get install openssl gnupg secure-delete ssss
 
 import os, sys, subprocess
 import types, traceback
@@ -34,7 +24,6 @@ identityEmail           = "jd@example.com"
 keyType                 = "RSA"                      # DSA is too small
 
 masterKeyLength           = "8192"                   # enlarge your keysize! (gpg can handle 8192+ bit keys once they got generated)
-masterphraselen           = "5"                      # 5 words is a minimum
 masterKeyExpire           = "0"                      # Master key should never expire
 
 signingSubkeyLength       = "2048"
@@ -42,6 +31,10 @@ signingSubkeyExpire       = "5y"
 
 encryptionSubkeyLength    = "4096"
 encryptionSubkeyExpire    = "5y"
+
+ssssIsAvailable           = False                     # [doesn't work yet] this is merely a default, will later be checked by code that tries to run "ssss-split -v"
+revocationCertificateShares       = 5
+revocationCertificateSharesNeeded = 4
 
 def printLogLine(message):
     # syslog.syslog(level, "syncman: " + formattedMessage)
@@ -57,7 +50,6 @@ def logError(message, *args):
         args = list(args)
         message = args.pop()
         args = tuple(args)
-    print(args)
     log(message % args)
     if exception:
         etype, evalue, etraceback = sys.exc_info()
@@ -83,7 +75,7 @@ class ShellCommandError(Exception):
         self.stdout = stdout
         self.stderr = stderr
     def __str__(self):
-        return "Shell command returned with return code: " + str(self.returnCode) + "\nstdout: {{{" + self.stdout + "}}}, stderr: {{{" + self.stderr + "}}}"
+        return "Shell command returned with return code: " + str(self.returnCode) + "\nstdout: {{{" + str(self.stdout) + "}}}, stderr: {{{" + str(self.stderr) + "}}}"
 
 def run(command, **kwargs):
     filteredKwargs = dict(kwargs)
@@ -101,7 +93,7 @@ def run(command, **kwargs):
     if kwargs.get("printCommand", False):
         print("# " + command)
 
-    stdout, stderr = process.communicate(stdin)
+    stdout, stderr = process.communicate(input = stdin)
     if not kwargs.get("ignoreErrors", False) and process.returncode != 0:
         raise ShellCommandError(command, process.returncode, stdout, stderr)
     return stdout, stderr
@@ -172,8 +164,9 @@ def generateRevocationCertificate():
     fileNameBase = "revocation-certificate-for-" + fingerprint[-8:]
     fileNameCleartext = fileNameBase + "-cleartext.gpg"
     fileNamePassphrase = fileNameBase + "-passphrase-protected.gpg"
+    fileNameSsss = fileNameBase + "-ssss-protected.gpg"
 
-    log("Calling gpg to generate the revocation certificate. You may be asked for your master key passphrase, and will be asked for a passphrase to (symmetrically) encrypt your revocation certificate. You can decrypt using gpg --decrypt and this passphrase if/when the certificate is needed.")
+    log("Calling gpg to generate the revocation certificate. You may be asked for your master key passphrase, and you will be asked for a passphrase to (symmetrically) encrypt your revocation certificate. You can decrypt using gpg --decrypt and this passphrase if/when the certificate is needed.")
 
     runGpgWithoutCapturing("--output '" + workingDirectory + "/tmp/" + fileNameCleartext + "'",
                            "--command-fd 0",
@@ -184,6 +177,23 @@ def generateRevocationCertificate():
     runGpgWithoutCapturing("--symmetric ",
                            "--output '" + workingDirectory + "/" + fileNamePassphrase + "'",
                            "'" + workingDirectory + "/tmp/" + fileNameCleartext + "'")
+
+    if ssssIsAvailable:
+        ssssKey = run("openssl rand -hex 128")[0]
+        if ssssKey.endswith("\n"):
+            ssssKey = ssssKey[:-1]
+        assert(len(ssssKey) == 256)
+        runGpgWithoutCapturing("--passphrase='" + ssssKey + "'"
+                               "--batch",
+                               "--output '" + workingDirectory + "/" + fileNameSsss + "'",
+                               "--symmetric",
+                               "'" + workingDirectory + "/tmp/" + fileNameCleartext + "'")
+        # TODO fixme: i can't make ssss-split stop asking for more characters when reading the secret from stdin, and there's no command line parameter for the secret
+        print("ssss-split -x -n " + str(revocationCertificateShares) + " -t " + str(revocationCertificateSharesNeeded))
+        #print(run("echo '" + ssssKey + "' | ssss-split -x -n " + str(revocationCertificateShares) + " -t " + str(revocationCertificateSharesNeeded), stderr = sys.stderr, stdout = sys.stdout)[0])
+        print(run("ssss-split -x -n " + str(revocationCertificateShares) + " -t " + str(revocationCertificateSharesNeeded), stdin = ssssKey + '\n\n\n\n\n', stderr = sys.stderr, stdout = sys.stdout)[0])
+        #run("ssss-split -x -n " + str(revocationCertificateShares) + " -t " + str(revocationCertificateSharesNeeded), stdin = sys.stdin, stderr = sys.stderr, stdout = sys.stdout)
+        #print(run("wc -c", stdin = "alma")[0])
 
 def generateSubkeys():
     fingerprint = getMasterKeyFingerprint()
@@ -232,6 +242,16 @@ try:
         workingDirectory = tempfile.mkdtemp(dir = "/run/shm", prefix = "gpg-key-gen")
 
     gpgHomeDirectory = ensureDirectoryExists(workingDirectory + "/tmp/gpg-homedir")
+
+    if ssssIsAvailable:
+        try:
+            run("ssss-split -v")
+            ssssIsAvailable = True
+        except ShellCommandError as e:
+            ssssIsAvailable = False
+
+    #if not ssssIsAvailable:
+    #    log("ssss-split is not available, shared secrets will not be generated.")
 
     open(gpgHomeDirectory + "/gpg.conf", "w").write("""personal-digest-preferences SHA512
 cert-digest-algo SHA512
