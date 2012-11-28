@@ -17,27 +17,15 @@ import types, traceback
 import tempfile
 import argparse
 
-identityName            = "John Doe"
-identityComment         = "master key"               # your nickname and/or comment
-identityEmail           = "jd@example.com"
-
-keyType                 = "RSA"                      # DSA is too small
-
-masterKeyLength           = "8192"                   # enlarge your keysize! (gpg can handle 8192+ bit keys once they got generated)
-masterKeyExpire           = "0"                      # Master key should never expire
-
-signingSubkeyLength       = "2048"
-signingSubkeyExpire       = "5y"
-
-encryptionSubkeyLength    = "4096"
-encryptionSubkeyExpire    = "5y"
+gpgHomeDirectory = None
+workingDirectory = None
 
 ssssIsAvailable           = False                     # [doesn't work yet] this is merely a default, will later be checked by code that tries to run "ssss-split -v"
 revocationCertificateShares       = 5
 revocationCertificateSharesNeeded = 4
 
 def printLogLine(message):
-    # syslog.syslog(level, "syncman: " + formattedMessage)
+    # syslog.syslog(level, "gpg-keygen: " + formattedMessage)
     sys.stderr.write("*** " + message + "\n")
 
 def log(message, *args):
@@ -48,7 +36,7 @@ def logError(message, *args):
     if isinstance(message, Exception):
         exception = message
         args = list(args)
-        message = args.pop()
+        message = args.pop(0)
         args = tuple(args)
     log(message % args)
     if exception:
@@ -131,19 +119,19 @@ def getMasterKeyFingerprint(**kwargs):
 
     return columns[9]
 
-def generateMasterKey():
+def generateMasterKey(args):
     if getMasterKeyFingerprint(failIfMissing = False) != None:
-        raise Exception("There's already a master key in the secring, this script doesn't support that use-case.")
+        raise Exception("There's already a master key in the gpg secring, this script doesn't support that use-case.")
 
     stdinBuffer = ""
     for entry in [
-                     "Key-Type: " + keyType,
-                     "Key-Length: " + masterKeyLength,
+                     "Key-Type: " + args.masterKeyType,
+                     "Key-Length: " + str(args.masterKeyLength),
                      "Key-Usage: sign",
-                     "Expire-Date: " + masterKeyExpire,
-                     (not isEmpty(identityName),    "Name-Real: "    + identityName),
-                     (not isEmpty(identityComment), "Name-Comment: " + identityComment),
-                     (not isEmpty(identityEmail),   "Name-Email: "   + identityEmail),
+                     "Expire-Date: " + args.masterKeyExpire,
+                     (not isEmpty(args.identityName),    "Name-Real: "    + args.identityName),
+                     (not isEmpty(args.identityComment), "Name-Comment: " + args.identityComment),
+                     (not isEmpty(args.identityEmail),   "Name-Email: "   + args.identityEmail),
                      #(not isEmpty(masterKeyPassphrase), "Passphrase: " + masterKeyPassphrase),
                      #(isEmpty(masterKeyPassphrase), "%ask-passphrase"),
                      "%ask-passphrase",
@@ -155,23 +143,26 @@ def generateMasterKey():
         else:
             stdinBuffer += entry + "\n"
 
-    log("Calling gpg to generate the master signing key. You will be asked for a passphrase to encrypt it. Generation may take a while due to collecting entropy...")
+    log("Calling gpg to generate the master signing key. You will be asked for a passphrase to encrypt it. Generation may take a while due to collecting entropy, especially for long keys. Be patient...")
 
-    runGpgWithoutCapturing("--batch --gen-key", stdin = stdinBuffer)
+    runGpgWithoutCapturing("--batch --verbose --gen-key", stdin = stdinBuffer)
 
-def generateRevocationCertificate():
+    log("Master signing key has successfully been generated, its fingerprint is '%s', details follow.", getMasterKeyFingerprint())
+    runGpgWithoutCapturing("--list-secret-keys")
+
+def generateRevocationCertificate(args):
     fingerprint = getMasterKeyFingerprint()
     fileNameBase = "revocation-certificate-for-" + fingerprint[-8:]
     fileNameCleartext = fileNameBase + "-cleartext.gpg"
     fileNamePassphrase = fileNameBase + "-passphrase-protected.gpg"
     fileNameSsss = fileNameBase + "-ssss-protected.gpg"
 
-    log("Calling gpg to generate the revocation certificate. You may be asked for your master key passphrase, and you will be asked for a passphrase to (symmetrically) encrypt your revocation certificate. You can decrypt using gpg --decrypt and this passphrase if/when the certificate is needed.")
+    log("Calling gpg to generate the revocation certificate. You may be asked for your master key passphrase, and you will be asked for a passphrase to (symmetrically) encrypt your revocation certificate. You can decrypt using gpg --decrypt and this passphrase if/when the certificate is needed in the future.")
 
     runGpgWithoutCapturing("--output '" + workingDirectory + "/tmp/" + fileNameCleartext + "'",
                            "--command-fd 0",
                            "--gen-revoke " + fingerprint,
-                           stdin = "y\n1\nRevocation certificate automatically generated at key generation time.\n\ny\n")
+                           stdin = "y\n1\nRevocation certificate automatically generated when the PGP key itself was generated.\n\ny\n")
 
     # symmetrically encrypt the revocation certificate
     runGpgWithoutCapturing("--symmetric ",
@@ -195,7 +186,7 @@ def generateRevocationCertificate():
         #run("ssss-split -x -n " + str(revocationCertificateShares) + " -t " + str(revocationCertificateSharesNeeded), stdin = sys.stdin, stderr = sys.stderr, stdout = sys.stdout)
         #print(run("wc -c", stdin = "alma")[0])
 
-def generateSubkeys():
+def generateSubkeys(args):
     fingerprint = getMasterKeyFingerprint()
 
     log("About to generate the subkeys, your master key passphrase will be needed.")
@@ -204,10 +195,10 @@ def generateSubkeys():
            "--quiet",
            "--yes",
            "--edit-key " + fingerprint,
-           stdin = "addkey\n6\n" + encryptionSubkeyLength + "\n" + encryptionSubkeyExpire + "\n" +
-                   "addkey\n4\n" + signingSubkeyLength +    "\n" + signingSubkeyExpire +    "\nsave\n")
+           stdin = "addkey\n6\n" + str(args.encryptionSubkeyLength) + "\n" + args.encryptionSubkeyExpire + "\n" +
+                   "addkey\n4\n" + str(args.signingSubkeyLength) +    "\n" + args.signingSubkeyExpire +    "\nsave\n")
 
-def exportKeys():
+def exportKeys(args):
     log("About to export keys.")
 
     fingerprint = getMasterKeyFingerprint()
@@ -229,16 +220,76 @@ def exportKeys():
 
     log("Exporting done.")
 
+def generateEverything(args):
+    log("You will repeatedly be asked for various passphrases in blocking windows, so it's a good idea to keep the log messages in this window visible.")
+    generateMasterKey(args)
+    generateRevocationCertificate(args)
+    generateSubkeys(args)
+    exportKeys(args)
+
+    resultDirectory = workingDirectory
+    # optionally rename temporary directory to contain the key fingerprint (if not user specified)
+    if not args.temporaryDirectory:
+        fingerprint = getMasterKeyFingerprint()
+        newName = os.path.join(os.path.dirname(workingDirectory), "gpg-key-" + fingerprint)
+        os.rename(workingDirectory, newName)
+        resultDirectory = newName
+
+    log("Done, your keys have been exported to '%s'. Now you can import the public keys and the secret subkeys to your regularly used device(s) (gpg --import public-keys.gpg secret-subkeys.gpg), but only import the secret part of the master key into a safe location (gpg --homedir some/safe/location --import public-keys.gpg secret-subkeys.gpg secret-master-key.gpg).",
+        resultDirectory)
+
 try:
-    argParser = argparse.ArgumentParser(description = 'Generate PGP key using GnuPG. See the front of the source code for the key parameters.')
-    argParser.add_argument('command',           metavar='command',         type = str, nargs = "?", default = "wholeStory", help = 'Command to run (see source code for a full list). Defaults to run the whole story and generate a key from zero.')
-    argParser.add_argument('--tmpdir',          metavar='tmpdir',          type = str, nargs = 1, help = "Defaults to /run/shm/gpg-key-gen{random}. Should be a volatile storage that doesn't get written to disk, or otherwise 'srm' (secure-delete) should be used for removing the sensitive data.")
+    if sys.version_info < (2, 7):
+        log("WARNING: this script was written and tested using python v2.7 and you seem to be running something older.")
 
-    args = argParser.parse_args()
+    argParser = argparse.ArgumentParser(description = 'Generate a new PGP key with GnuPG using current best practices (notwithstanding some subjectivity).',
+                                        formatter_class = argparse.ArgumentDefaultsHelpFormatter)
+    argParser.add_argument('--temporary-directory', "-t", metavar = 'DIR', dest = 'temporaryDirectory', type = str, help = "Defaults to /run/shm/gpg-key-gen{random}. Should point to a volatile storage, or otherwise 'srm' (secure-delete) should be used for removing the sensitive data from non-volatile storage devices.")
 
-    if args.tmpdir:
-        workingDirectory = ensureDirectoryExists(args.tmpdir[0])
+    argGroup = argParser.add_argument_group(title = 'Master key')
+    argGroup.add_argument('--master-key-length',     metavar = 'BITS', dest = 'masterKeyLength',      type = int, default = 8192,  help = 'Master key length')
+    argGroup.add_argument('--master-key-type',       metavar = 'TYPE', dest = 'masterKeyType',        type = str, default = "RSA", help = 'Master key type')
+    argGroup.add_argument('--master-key-expire',     metavar = 'EXP',  dest = 'masterKeyExpire',      type = str, default = "0",   help = 'Master key expiration date. Zero means never expires.')
+
+    argGroup = argParser.add_argument_group(title = 'An email identity')
+    argGroup.add_argument('--identity-name',    metavar = 'NAME',    dest = 'identityName',    type = str, default = "John Doe",             help = 'The real name part.')
+    argGroup.add_argument('--identity-comment', metavar = 'COMMENT', dest = 'identityComment', type = str, default = "",                     help = 'The comment part.')
+    argGroup.add_argument('--identity-email',   metavar = 'EMAIL',   dest = 'identityEmail',   type = str, default = "john.doe@example.com", help = 'The email part.')
+
+    argGroup = argParser.add_argument_group(title = 'Subkeys')
+    argGroup.add_argument('--encryption-subkey-length', metavar = 'BITS', dest = 'encryptionSubkeyLength', type = int, default = 4096, help = 'Encryption subkey length.')
+    argGroup.add_argument('--encryption-subkey-expire', metavar = 'EXP',  dest = 'encryptionSubkeyExpire', type = str, default = "3y", help = 'Encryption subkey expiration date. Zero means never expires.')
+    argGroup.add_argument('--signing-subkey-length',    metavar = 'BITS', dest = 'signingSubkeyLength', type = int, default = 2048, help = 'Signing subkey length.')
+    argGroup.add_argument('--signing-subkey-expire',    metavar = 'EXP',  dest = 'signingSubkeyExpire', type = str, default = "3y", help = 'Signing subkey expiration date. Zero means never expires.')
+
+    argParserSubs = argParser.add_subparsers(title = "Commands", dest = "command")
+
+    subParser = argParserSubs.add_parser('generateEverything', help = '')
+    subParser.set_defaults(func = generateEverything)
+
+    subParser = argParserSubs.add_parser('generateMasterKey', help = 'Generate the master key in the .gnupg home under the temporary directory')
+    subParser.set_defaults(func = generateMasterKey)
+
+    subParser = argParserSubs.add_parser('generateSubkeys', help = 'Generate a signing and an encryption subkey in the .gnupg home under the temporary directory')
+    subParser.set_defaults(func = generateSubkeys)
+
+    subParser = argParserSubs.add_parser('generateRevocationCertificate', help = 'Generate a revocation certificate, symmetrically encrypt it, and save it in a file in the temporary directory')
+    subParser.set_defaults(func = generateRevocationCertificate)
+
+    subParser = argParserSubs.add_parser('exportKeys', help = 'Export the public and secret keys into the temporary directory')
+    subParser.set_defaults(func = exportKeys)
+
+    if len(sys.argv) < 2:
+        args = argParser.parse_args(["generateEverything"])
     else:
+        args = argParser.parse_args()
+
+    if args.temporaryDirectory:
+        workingDirectory = ensureDirectoryExists(args.temporaryDirectory)
+    else:
+        if not (args.func == generateEverything or args.func == generateMasterKey):
+            log("The command '%s' doesn't make sense unless you also specify the temporary directory of a previous run with --temporary-directory.", args.command)
+            sys.exit(1)
         workingDirectory = tempfile.mkdtemp(dir = "/run/shm", prefix = "gpg-key-gen")
 
     gpgHomeDirectory = ensureDirectoryExists(workingDirectory + "/tmp/gpg-homedir")
@@ -253,41 +304,14 @@ try:
     #if not ssssIsAvailable:
     #    log("ssss-split is not available, shared secrets will not be generated.")
 
-    open(gpgHomeDirectory + "/gpg.conf", "w").write("""personal-digest-preferences SHA512
+    if not os.path.exists(gpgHomeDirectory + "/gpg.conf"):
+        open(gpgHomeDirectory + "/gpg.conf", "w").write("""personal-digest-preferences SHA512
 cert-digest-algo SHA512
 default-preference-list SHA512 SHA384 SHA256 SHA224 AES256 AES192 AES CAST5 ZLIB BZIP2 ZIP Uncompressed""")
 
-    log("Temporary directory for sensitive data will be: '" + workingDirectory + "'. Make sure it's either in a volatile storage (e.g. /run/shm/ on linux), or it's deleted using 'srm' (secure-delete) once it's not needed!")
+    log("Temporary directory for sensitive data will be '" + workingDirectory + "'. Make sure it's either on a volatile storage (e.g. /run/shm/ on linux), or it's deleted using 'srm' (secure-delete) once it's not needed!")
 
-    if args.command == "wholeStory":
-        log("You will repeatedly be asked for passphrases in blocking windows, so it's a good idea to keep the messages in this window visible.")
-        generateMasterKey()
-        log("Master signing key generated, fingerprint is '%s', details follow.", getMasterKeyFingerprint())
-        runGpgWithoutCapturing("--list-secret-keys")
-        generateRevocationCertificate()
-        generateSubkeys()
-        exportKeys()
-
-        resultDirectory = workingDirectory
-        if not args.tmpdir:
-            fingerprint = getMasterKeyFingerprint()
-            newName = os.path.join(os.path.dirname(workingDirectory), "gpg-key-" + fingerprint)
-            os.rename(workingDirectory, newName)
-            resultDirectory = newName
-        log("Done, your keys have been exported to '%s'. Now you can import the public keys and the secret subkeys to your regularly used device(s) (gpg --import public-keys.gpg secret-subkeys.gpg), but only import the secret part of the master key into a safe location (gpg --homedir some/safe/location --import public-keys.gpg secret-subkeys.gpg secret-master-key.gpg).",
-            resultDirectory)
-    elif args.command == "generateMasterKey":
-        generateMasterKey()
-    elif args.command == "generateSubkeys":
-        generateSubkeys()
-    elif args.command == "generateRevocationCertificate":
-        generateRevocationCertificate()
-    elif args.command == "exportKeys":
-        exportKeys()
-    elif args.command == "getMasterKeyFingerprint":
-        print(getMasterKeyFingerprint(failIfMissing = False))
-    else:
-        log("Error, unknown command '%s'", args.command)
+    args.func(args)
 
 except Exception as e:
     logError(e, "Error reached toplevel, exiting.")
