@@ -55,7 +55,7 @@ This script generates:
 * generate and symmetrically encrypt a revocation certificate into the file <code>revocation-certificate-for-[keyid]-passphrase-protected.gpg</code>
 * (planned: support for [<code>ssss-split</code>](http://point-at-infinity.org/ssss/) to generate [secret sharing](http://en.wikipedia.org/wiki/Secret_sharing) to backup the master key and the revocation certificate in a distributed manner)
 
-Once the files have been generated you can import them into gpg homedir's (the default one is <code>~/.gnupg</code>). One should be on your regularly used computer(s), but it should only hold the secret parts of the subkeys and the public parts of all the keys (but not the secret part of the master signing key, which should be handled with more precautions):
+Once the files have been generated you can import them into gpg homedir's (the default one is <code>~/.gnupg</code>). One should be on your regularly used computer(s), but it should only hold the secret parts of the subkeys and the public parts of all the keys (but not the secret part of the master signing key, which should be handled with more care):
 
         $ gpg --import secret-subkeys.gpg public-keys.gpg
         $ gpg --list-secret-keys
@@ -71,5 +71,5 @@ Once the files have been generated you can import them into gpg homedir's (the d
 
 * _PGP key_ - It's usually a shorthand for _PGP key block_, which will be the case in this document, too. Not to be confused with _asymmetric cryptographic keypairs_, which are merely parts of _PGP key blocks_.
 * _PGP key block_ - a complex structure of information, including but not limited to the following: multiple cryptographic keys, multiple identities (email addresses, photos, etc), digital signatures on various parts of the key block potentially made using other people's keys (e.g. signing someone's key to communicate your belief to the world that the identities listed in the given PGP key, and the secret part of said PGP key belong to the same (real world) person), etc...
-* _subkey_ - _PGP key blocks_ can have, among other things, 1+ _asymmetric cryptographic keypairs_. One such _asymmetric cryptographic keypair_ is mandatory for normal operation. It's called the _master signing key_, and it's used to sign various information inside the key block, e.g. identities and/or other cryptographic keys, which are called _subkey_s.
+* _subkey_ - _PGP key blocks_ can have, among other things, 1+ _asymmetric cryptographic keypairs_. One such _asymmetric cryptographic keypair_ is mandatory for normal operation. It's called the _master signing key_, and it's used to sign various information inside the key block, e.g. identities and/or other cryptographic keys, which are called _subkeys_.
 * _asymmetric cryptographic keypair_ - they are basically pairs of very big interconnected random numbers, one of them should be made public, while the other one should be kept secret. Asymmetric encryption algorithms use the public part to encrypt data and to verify signature blocks, while use the secret part to decrypt data and to generate signature blocks.
