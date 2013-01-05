@@ -1,8 +1,8 @@
 # gpg-keygen #
 
-A script to generate PGP keys with GnuPG, following best practices, or at least an approximation thereof.
+A script to generate [PGP](http://en.wikipedia.org/wiki/Pretty_Good_Privacy) keys with [GnuPG](http://www.gnupg.org/), following best practices, or at least an approximation thereof.
 
-The aim of this document is to provide a concise and up-to-date description of best practices regarding the usage of [GnuPG](http://www.gnupg.org/). A basic understanding of [public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography), and [GnuPG](http://www.gnupg.org/) in particular is assumed.
+The aim of this document is to provide a concise and up-to-date description of best practices regarding the usage of GnuPG. A basic understanding of [public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography), and GnuPG in particular is assumed.
 
 If something is not clear or you're new to PGP, then make sure to start with the [Glossary](#-glossary) below.
 
@@ -32,7 +32,7 @@ The aim is to generate a digital identity that can serve to identify you and to 
 
 Things to consider:
 
-* Having a strong master signing key can provide a longer time span for your digital identity and for [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy)
+* Having a strong master signing key can provide a longer time span for your digital identity and for [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy).
 * Longer signing keys generate longer signatures.
 * With a valid signing subkey, the master signing key is rarely used, so the size of the signatures it generates is not too important.
 * It's possible to generate 8192 bit RSA signing keys (as of this writing, by editing the GnuPG sources to overcome the 4096 bit user interface limit, or as this script does, by using batch mode).
@@ -40,7 +40,7 @@ Things to consider:
 
 Some more thoughts [here](http://www.ctrlc.hu/~stef/blog/posts/PGP_key_generation.html).
 
-## Using PGP without keeping the secret part of your master signing key on your computer ##
+## Using GnuPG without keeping the secret part of your master signing key on your computer ##
 
 GnuPG has no problem working with a PGP key block that is missing the secret part of its master signing key, as long as it's not needed for an operation. Therefore it's a good idea not to store the secret part of the master signing key in the regularly used gpg home directory, but rather keep it at a safer location.
 
