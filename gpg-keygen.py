@@ -130,13 +130,16 @@ def generateMasterKey(args):
     if getMasterKeyFingerprint(failIfMissing = False) != None:
         raise UserMessageError("There's already a master key in the gpg secring, this script doesn't support that use-case.")
 
+    if not args.identityName:
+        raise UserMessageError("the --identity-name parameter is mandatory when generating a master key")
+
     stdinBuffer = ""
     for entry in [
                      "Key-Type: " + args.masterKeyType,
                      "Key-Length: " + str(args.masterKeyLength),
                      "Key-Usage: sign",
                      "Expire-Date: " + args.masterKeyExpire,
-                     (not isEmpty(args.identityName),    "Name-Real: "    + args.identityName),
+                     "Name-Real: " + args.identityName,
                      (not isEmpty(args.identityComment), "Name-Comment: " + args.identityComment),
                      (not isEmpty(args.identityEmail),   "Name-Email: "   + args.identityEmail),
                      #(not isEmpty(masterKeyPassphrase), "Passphrase: " + masterKeyPassphrase),
@@ -164,7 +167,7 @@ def generateRevocationCertificate(args):
     fileNamePassphrase = fileNameBase + "-passphrase-protected.gpg"
     fileNameSsss = fileNameBase + "-ssss-protected.gpg"
 
-    log("Calling gpg to generate the revocation certificate. You may be asked for your master key passphrase, and you will be asked for a passphrase to (symmetrically) encrypt your revocation certificate. You can decrypt using gpg --decrypt and this passphrase if/when the certificate is needed in the future.")
+    log("Calling gpg to generate the revocation certificate. You may be asked for your master key passphrase, and you will be asked for a passphrase to (symmetrically) encrypt your revocation certificate. If/when the certificate is needed in the future, then you can decrypt it using 'gpg --decrypt' and providing this passphrase.")
 
     runGpgWithoutCapturing("--output '" + workingDirectory + "/tmp/" + fileNameCleartext + "'",
                            "--command-fd 0",
@@ -259,9 +262,9 @@ try:
     argGroup.add_argument('--master-key-expire',     metavar = 'EXP',  dest = 'masterKeyExpire',      type = str, default = "0",   help = 'Master key expiration date. Zero means never expires.')
 
     argGroup = argParser.add_argument_group(title = 'An email identity')
-    argGroup.add_argument('--identity-name',    metavar = 'NAME',    dest = 'identityName',    type = str, default = "John Doe",             help = 'The real name part.')
-    argGroup.add_argument('--identity-comment', metavar = 'COMMENT', dest = 'identityComment', type = str, default = "",                     help = 'The comment part.')
-    argGroup.add_argument('--identity-email',   metavar = 'EMAIL',   dest = 'identityEmail',   type = str, default = "john.doe@example.com", help = 'The email part.')
+    argGroup.add_argument('--identity-name',    metavar = 'NAME',    dest = 'identityName',    type = str, default = None,      help = 'The real name part.')
+    argGroup.add_argument('--identity-comment', metavar = 'COMMENT', dest = 'identityComment', type = str, default = "",        help = 'The comment part.')
+    argGroup.add_argument('--identity-email',   metavar = 'EMAIL',   dest = 'identityEmail',   type = str, default = "",        help = 'The email part.')
 
     argGroup = argParser.add_argument_group(title = 'Subkeys')
     argGroup.add_argument('--encryption-subkey-length', metavar = 'BITS', dest = 'encryptionSubkeyLength', type = int, default = 4096, help = 'Encryption subkey length.')
@@ -269,34 +272,15 @@ try:
     argGroup.add_argument('--signing-subkey-length',    metavar = 'BITS', dest = 'signingSubkeyLength', type = int, default = 2048, help = 'Signing subkey length.')
     argGroup.add_argument('--signing-subkey-expire',    metavar = 'EXP',  dest = 'signingSubkeyExpire', type = str, default = "3y", help = 'Signing subkey expiration date. Zero means never expires.')
 
-    argParserSubs = argParser.add_subparsers(title = "Commands", dest = "command")
+    argParser.add_argument('--step', choices=['generateMasterKey', 'generateSubkeys', 'generateRevocationCertificate', 'exportKeys'], help = "Which step to run. If none given then all of them will be run.")
 
-    subParser = argParserSubs.add_parser('generateEverything', help = '')
-    subParser.set_defaults(func = generateEverything)
-
-    subParser = argParserSubs.add_parser('generateMasterKey', help = 'Generate the master key in the .gnupg home under the temporary directory')
-    subParser.set_defaults(func = generateMasterKey)
-
-    subParser = argParserSubs.add_parser('generateSubkeys', help = 'Generate a signing and an encryption subkey in the .gnupg home under the temporary directory')
-    subParser.set_defaults(func = generateSubkeys)
-
-    subParser = argParserSubs.add_parser('generateRevocationCertificate', help = 'Generate a revocation certificate, symmetrically encrypt it, and save it in a file in the temporary directory')
-    subParser.set_defaults(func = generateRevocationCertificate)
-
-    subParser = argParserSubs.add_parser('exportKeys', help = 'Export the public and secret keys into the temporary directory')
-    subParser.set_defaults(func = exportKeys)
-
-    if len(sys.argv) < 2:
-        args = argParser.parse_args(["generateEverything"])
-    else:
-        args = argParser.parse_args()
+    args = argParser.parse_args()
 
     if args.temporaryDirectory:
         workingDirectory = ensureDirectoryExists(args.temporaryDirectory)
     else:
-        if not (args.func == generateEverything or args.func == generateMasterKey):
-            log("The command '%s' doesn't make sense unless you also specify the temporary directory of a previous run with --temporary-directory.", args.command)
-            sys.exit(1)
+        if not (args.step == None or args.step == generateMasterKey):
+            raise UserMessageError("The command '%s' doesn't make sense unless you also specify the temporary directory of a previous run with --temporary-directory.", args.step)
         workingDirectory = tempfile.mkdtemp(dir = "/run/shm", prefix = "gpg-key-gen")
 
     gpgHomeDirectory = ensureDirectoryExists(workingDirectory + "/tmp/gpg-homedir")
@@ -318,7 +302,18 @@ default-preference-list SHA512 SHA384 SHA256 SHA224 AES256 AES192 AES CAST5 ZLIB
 
     log("Temporary directory for sensitive data will be '" + workingDirectory + "'. Make sure it's either on a volatile storage (e.g. /run/shm/ on linux), or it's deleted using 'srm' (secure-delete) once it's not needed!")
 
-    args.func(args)
+    try:
+        if args.step is None:
+            generateEverything(args)
+        else:
+            fn = globals()[args.step]
+            if fn:
+                fn(args)
+            else:
+                raise UserMessageError("Couldn't find step (python function) '%s'", args.step)
+    except UserMessageError as e:
+        print(sys.argv[0] + ": " + str(e))
+        sys.exit(1)
 
 except Exception as e:
     logError(e, "Error reached toplevel, exiting.")
