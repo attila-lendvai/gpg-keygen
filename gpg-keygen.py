@@ -56,6 +56,13 @@ def ensureDirectoryExists(path):
 def isEmpty(thing):
     return not isinstance(thing, str) or thing == ""
 
+class UserMessageError(Exception):
+    def __init__(self, message, *args):
+        self.message = message
+        self.args = args
+    def __str__(self):
+        return self.message % self.args
+
 class ShellCommandError(Exception):
     def __init__(self, command, returnCode, stdout, stderr):
         self.command = command
@@ -103,10 +110,10 @@ def getMasterKeyFingerprint(**kwargs):
     output = runGpg("--with-colons --list-secret-keys").splitlines()
     output = [line for line in output if line.startswith("sec:")]
     if len(output) > 1:
-        raise Exception("Multiple master keys in the secring?")
+        raise UserMessageError("Multiple master keys in the secring!?")
     elif len(output) == 0:
         if failIfMissing:
-            raise Exception("No master key found in the secring.")
+            raise UserMessageError("No master key found in the secring.")
         else:
             return None
     columns = output[0].split(":")
@@ -121,7 +128,7 @@ def getMasterKeyFingerprint(**kwargs):
 
 def generateMasterKey(args):
     if getMasterKeyFingerprint(failIfMissing = False) != None:
-        raise Exception("There's already a master key in the gpg secring, this script doesn't support that use-case.")
+        raise UserMessageError("There's already a master key in the gpg secring, this script doesn't support that use-case.")
 
     stdinBuffer = ""
     for entry in [
