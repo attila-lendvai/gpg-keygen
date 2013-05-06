@@ -13,12 +13,12 @@ Alternatives to this project and/or further reading: [gpk](https://github.com/st
 * [Public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography) happens between two encryption **keys**, which is not necessarily only two humans, unless enough care has been taken when exchanging public keys and to keep the secret keys secret.
 * In a digital networked world it's not possible to delete any published information, it must be assumed to be just there forever. This also applies to PGP keys.
 * Properly authenticated revocation requests can be published though. If such requests are [digitally signed](http://en.wikipedia.org/wiki/Digital_signature) (authenticated), then they will be honored by programs using e.g. a PGP key (key servers, client programs), and the revoked data will be ignored/hidden from the user accordingly.
-* Having a separately stored revocation certificate in your backup comes very handy if your key gets compromised. By publishing it you can tell your peers that your key should not be used anymore.
+* Having a separately stored revocation certificate in your backup comes very handy if your key gets compromised or lost. By publishing it you can tell your peers that your key should not be used anymore.
 * The most precious part of a _PGP key block_ is its _master signing key_.
 * The _master signing key_ of a _PGP key block_ is rarely needed (mostly when editing the _PGP key block_ itself and when signing other people's keys, and granted that at least one additional signing subkey exists to sign ordinary documents).
 * If you don't trust the software environment and/or the computer generating or using your gpg key, then you cannot trust the key and the cryptography either. [Opensource](http://en.wikipedia.org/wiki/Open-source_software) is a minimum in security, so use a Linux live cd or something similar from a trusted source to generate and/or use your master signing key, preferrably while being offline! E.g. [Tails](http://tails.boum.org/), [Privatix](http://www.mandalka.name/privatix/) or [Liberté Linux](http://dee.su/liberte).
 * There are nice hardware solutions to protect your keys like [crypto-stick.com](http://www.crypto-stick.com/)
-* If you forget the passphrase for your already published key, and you don't have a revocation certificate, then your key will be lingering on the keyservers confusing your peers, who will annoy you by sending you messages you can't read.
+* If you forget the passphrase for your already published key, and you don't have a revocation certificate, then your key will be lingering on the keyservers confusing your peers, who will annoy you by sending you messages you cannot read.
 * Passphrases: three to five word long sentences (based on a non-trivial vocabulary, preferrably with s0me typ0s) are easier to remember than a bunch of random characters, and are [better passphrases](http://www.baekdal.com/insights/password-security-usability). You can even build a little story around them to have separate but semantically interconnected passphrases (for the keys, for the revocation certificate, etc.). A vivid dream or delightful fantasies can be a good basis for something you won't forget... :)
 * ...but at the end of the day it'll always be a tradeoff between security and convenience. Assess your risks and act accordingly.
 
@@ -32,10 +32,10 @@ The aim is to generate a digital identity that can serve to identify you and to 
 
 Things to consider:
 
-* Having a strong master signing key can provide a longer time span for your digital identity and for [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy).
 * Longer signing keys generate longer signatures.
 * If a valid signing subkey exists, then the master signing key is rarely used (only to sign internal parts of the key block, or when explicitly selected), so the size of the signatures it generates is not a major concern.
-* It's possible to generate 8192 bit RSA signing keys (by using batch mode as this script does).
+* Having a strong master signing key (and taking good care of it) can provide a long time span for your digital identity (possiblt 10+ years) and for [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy).
+* It's possible to generate 8192 bit RSA signing keys (by using batch mode as this script does for the mail signing key).
 * Some GnuPG configuration parameters affect newly generated keys (although not in a permanent way). See _setperf_ to set the preferred hash algorithms for identities e.g. [here](https://wiki.ubuntu.com/SecurityTeam/GPGMigration).
 
 Some more thoughts [here](http://www.ctrlc.hu/~stef/blog/posts/PGP_key_generation.html).
@@ -44,11 +44,11 @@ Some more thoughts [here](http://www.ctrlc.hu/~stef/blog/posts/PGP_key_generatio
 
 GnuPG has no problem working with a PGP key block that is missing the secret part of its master signing key, as long as it's not needed for an operation. Therefore it's a good idea not to store the secret part of the master signing key in the regularly used gpg home directory, but rather keep it at a safer location.
 
-This script generates:
+This script generates (with defaults in parens):
 
-* a master signing key
-* a subkey for signing
-* a subkey for encryption
+* a master signing key (8192 bit, never expires)
+* a subkey for signing (4096 bit, 3 years)
+* a subkey for encryption (2048 bit, 3 years)
 * export the secret part of the master signing key into the file <code>secret-master-key.gpg</code>
 * export the secret parts of the two generated subkeys into the file <code>secret-subkeys.gpg</code>
 * export the public parts of all the three generated keys into the file <code>public-keys.gpg</code>
@@ -62,8 +62,8 @@ Once the exported files have been generated you can import them into various gpg
         ---------------------------------
         sec#  8192R/ABCD1234 2010-01-01
         uid                  John Doe <john.doe@example.com>
-        ssb   4096R/42AA42AA 2010-01-01 [expires: 2015-01-01]
-        ssb   2048R/41BB41BB 2010-01-01 [expires: 2015-01-01]
+        ssb   4096R/42AA42AA 2010-01-01 [expires: 2013-01-01]
+        ssb   2048R/41BB41BB 2010-01-01 [expires: 2013-01-01]
 
 (the '#' character in the output shows that the secret part of the master signing key is missing)
 
@@ -76,9 +76,9 @@ Once the exported files have been generated you can import them into various gpg
 
 ## Credits ##
 
-Written by Attila Lendvai <attila.lendvai@gmail.com>.
+Written by Attila Lendvai <attila.lendvai@gmail.com> (Key fingerprint: 2FA1 A9DC 9C1E BA25 A59C  963F 5D5F 45C7 DFCD 0A39).
 
-Donations are welcome:
+Donations are welcome if you've found this useful:
 
-* Bitcoin (BTC): `1AhU3yviYjTPDtwDB9heTaVGzDMqnvhLCA`
-* Ripple (XRP): `rJqj41VS9FrRA5oPdj7qSus8FpD4SLFbUg`
+* Bitcoin (BTC): `1AhU3yviYjTPDtwDB9heTaVGzDMqnvhLCA` (0 BTC as of 2013-05-04)
+* Ripple (XRP): `rJqj41VS9FrRA5oPdj7qSus8FpD4SLFbUg` (0 XRP as of 2013-05-04)
