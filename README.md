@@ -33,6 +33,7 @@ The aim is to generate a digital identity that can serve to identify you and to 
 Things to consider:
 
 * Longer signing keys generate longer signatures.
+* RSA signatures are longer than DSA signatures, but [there's more to this story](http://superuser.com/questions/13164/what-is-better-for-gpg-keys-rsa-or-dsa).
 * If a valid signing subkey exists, then the master signing key is rarely used (only to sign internal parts of the key block, or when explicitly selected), so the size of the signatures it generates is not a major concern.
 * Having a strong master signing key (and taking good care of it) can provide a long time span for your digital identity (possiblt 10+ years) and for [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy).
 * It's possible to generate 8192 bit RSA signing keys (by using batch mode as this script does for the mail signing key).
@@ -46,16 +47,16 @@ GnuPG has no problem working with a PGP key block that is missing the secret par
 
 This script generates (with defaults in parens):
 
-* a master signing key (8192 bit, never expires)
-* a subkey for signing (4096 bit, 3 years)
-* a subkey for encryption (2048 bit, 3 years)
+* a master signing key (RSA 8192 bit, never expires)
+* a subkey for signing (RSA 4096 bit, 3 years)
+* a subkey for encryption (RSA 2048 bit, 3 years)
 * export the secret part of the master signing key into the file <code>secret-master-key.gpg</code>
 * export the secret parts of the two generated subkeys into the file <code>secret-subkeys.gpg</code>
 * export the public parts of all the three generated keys into the file <code>public-keys.gpg</code>
 * generate and symmetrically encrypt a revocation certificate into the file <code>revocation-certificate-for-[keyid]-passphrase-protected.gpg</code>
 * (planned: support for [<code>ssss-split</code>](http://point-at-infinity.org/ssss/) to generate [secret sharing](http://en.wikipedia.org/wiki/Secret_sharing) to backup the master key and the revocation certificate in a distributed manner)
 
-Once the exported files have been generated you can import them into various gpg homedir's on your devices (by default <code>~/.gnupg</code>). Where you should import which part of which keys depends on the level of security you want to achieve. For better security you should keeping the secret part of your master signing key on an offline storage, and only attaching it to safe software environments when needed (e.g. when signing other people's keys or when your own keyblock needs to be modified). IOW, keep the private part of your master signing key away from your regularly used software environment(s):
+Once the exported files have been generated you can import them into the gpg homedir's on your devices (by default <code>~/.gnupg</code>). Where you should import what depends on the level of security you want to achieve. For better security you should keep the secret part of your master signing key on an offline storage, and only attaching it to safe software environments when needed (e.g. when signing other people's keys or when your own keyblock needs to be modified). IOW, keep the private part of your master signing key away from your regularly used software environment(s):
 
         $ gpg --import secret-subkeys.gpg public-keys.gpg
         $ gpg --list-secret-keys
@@ -80,5 +81,5 @@ Written by Attila Lendvai <attila.lendvai@gmail.com> (Key fingerprint: 2FA1 A9D
 
 Donations are welcome if you've found this useful:
 
-* Bitcoin (BTC): `1AhU3yviYjTPDtwDB9heTaVGzDMqnvhLCA` (0 BTC as of 2013-05-04)
-* Ripple (XRP): `rJqj41VS9FrRA5oPdj7qSus8FpD4SLFbUg` (0 XRP as of 2013-05-04)
+* Bitcoin (BTC): `1EfnFBV5byfAbyFgLGsf85EV2XEGyPPT3w` (0 BTC as of 2013-09-25)
+* Ripple (XRP): `r33NEgyd7HqvrUeB98rQ4VoBxP438gC74Q` (0 XRP as of 2013-09-25)
