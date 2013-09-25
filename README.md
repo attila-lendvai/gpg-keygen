@@ -81,5 +81,5 @@ Written by Attila Lendvai <attila.lendvai@gmail.com> (Key fingerprint: 2FA1 A9D
 
 Donations are welcome if you've found this useful:
 
-* Bitcoin (BTC): `1EfnFBV5byfAbyFgLGsf85EV2XEGyPPT3w` (0 BTC as of 2013-09-25)
+* Bitcoin (BTC): `1Ej8SeMNTkwjSwhKLu7H1XLVRPZ3HUjM4J` (0 BTC as of 2013-09-25)
 * Ripple (XRP): `r33NEgyd7HqvrUeB98rQ4VoBxP438gC74Q` (0 XRP as of 2013-09-25)
