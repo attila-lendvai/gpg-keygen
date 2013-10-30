@@ -15,7 +15,7 @@ Alternatives to this project and/or further reading: [gpk](https://github.com/st
 * Properly authenticated revocation requests can be published though. If such requests are [digitally signed](http://en.wikipedia.org/wiki/Digital_signature) (authenticated), then they will be honored by programs using e.g. a PGP key (key servers, client programs), and the revoked data will be ignored/hidden from the user accordingly.
 * Having a separately stored revocation certificate in your backup comes very handy if your key gets compromised or lost. By publishing it you can tell your peers that your key should not be used anymore.
 * The most precious part of a _PGP key block_ is its _master signing key_.
-* The _master signing key_ of a _PGP key block_ is rarely needed (mostly when editing the _PGP key block_ itself and when signing other people's keys, and granted that at least one additional signing subkey exists to sign ordinary documents).
+* The _master signing key_ of a _PGP key block_ is rarely needed (mostly when editing the _PGP key block_ itself and when signing other people's keys).
 * If you don't trust the software environment and/or the computer generating or using your gpg key, then you cannot trust the key and the cryptography either. [Opensource](http://en.wikipedia.org/wiki/Open-source_software) is a minimum in security, so use a Linux live cd or something similar from a trusted source to generate and/or use your master signing key, preferrably while being offline! E.g. [Tails](http://tails.boum.org/), [Privatix](http://www.mandalka.name/privatix/) or [Liberté Linux](http://dee.su/liberte).
 * There are nice hardware solutions to protect your keys like [crypto-stick.com](http://www.crypto-stick.com/)
 * If you forget the passphrase for your already published key, and you don't have a revocation certificate, then your key will be lingering on the keyservers confusing your peers, who will annoy you by sending you messages you cannot read.
@@ -81,5 +81,6 @@ Written by Attila Lendvai <attila.lendvai@gmail.com> (Key fingerprint: 2FA1 A9D
 
 Donations are welcome if you've found this useful:
 
-* Bitcoin (BTC): `1Ej8SeMNTkwjSwhKLu7H1XLVRPZ3HUjM4J` (0 BTC as of 2013-09-25)
-* Ripple (XRP): `r33NEgyd7HqvrUeB98rQ4VoBxP438gC74Q` (0 XRP as of 2013-09-25)
+* Bitcoin (BTC): `1Ej8SeMNTkwjSwhKLu7H1XLVRPZ3HUjM4J` (0 BTC as of 2013-10-30)
+* Ripple (XRP): `r33NEgyd7HqvrUeB98rQ4VoBxP438gC74Q` (0 XRP as of 2013-10-30)
+* [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RTENWWNX3P9JY): (0 USD as of 2013-10-30)
