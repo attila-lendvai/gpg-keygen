@@ -1,25 +1,23 @@
 # gpg-keygen #
 
-A readme and a script to generate [PGP](http://en.wikipedia.org/wiki/Pretty_Good_Privacy) keys using [GnuPG](http://www.gnupg.org/), following best practices, or at least my approximation of them.
+A readme and a script to generate [PGP](http://en.wikipedia.org/wiki/Pretty_Good_Privacy) keys using [GnuPG](http://www.gnupg.org/), using the current best practices.
 
-The aim of this document is to provide a concise and up-to-date description of best practices regarding the usage of GnuPG. A basic understanding of [public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography), and GnuPG in particular is assumed.
+To provide a concise and up-to-date description of best practices regarding the usage of GnuPG. A basic understanding of [public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography), and GnuPG in particular is assumed.
 
 If something is not clear or you're new to PGP, then make sure to start with the [Glossary](#-glossary) below.
 
-Alternatives to this project and/or further reading: [gpk](https://github.com/stef/gpk), [gpg-quickstart](http://www.madboa.com/geek/gpg-quickstart/), [gnupg howtos](http://www.gnupg.org/documentation/howtos.en.html), [Why use PGP?](http://superuser.com/a/16165/27578).
-
 ## Some quick insights ##
 
-* [Public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography) happens between two encryption **keys**, which is not necessarily only two humans, unless enough care has been taken when exchanging public keys and to keep the secret keys secret.
+* [Public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography) happens between two encryption **keys**, which is not necessarily only two humans, unless enough care has been taken when exchanging public keys and to keep the secret keys indeed secret.
 * In a digital networked world it's not possible to delete any published information, it must be assumed to be just there forever. This also applies to PGP keys.
 * Properly authenticated revocation requests can be published though. If such requests are [digitally signed](http://en.wikipedia.org/wiki/Digital_signature) (authenticated), then they will be honored by programs using e.g. a PGP key (key servers, client programs), and the revoked data will be ignored/hidden from the user accordingly.
 * Having a separately stored revocation certificate in your backup comes very handy if your key gets compromised or lost. By publishing it you can tell your peers that your key should not be used anymore.
 * The most precious part of a _PGP key block_ is its _master signing key_.
 * The _master signing key_ of a _PGP key block_ is rarely needed (mostly when editing the _PGP key block_ itself and when signing other people's keys).
-* If you don't trust the software environment and/or the computer generating or using your gpg key, then you cannot trust the key and the cryptography either. [Opensource](http://en.wikipedia.org/wiki/Open-source_software) is a minimum in security, so use a Linux live cd or something similar from a trusted source to generate and/or use your master signing key, preferrably while being offline! E.g. [Tails](http://tails.boum.org/), [Privatix](http://www.mandalka.name/privatix/) or [Liberté Linux](http://dee.su/liberte).
-* There are nice hardware solutions to protect your keys like [crypto-stick.com](http://www.crypto-stick.com/)
+* If you don't trust the software environment and/or the computer generating or using your gpg key, then you cannot trust the key and the cryptography either. [Opensource](http://en.wikipedia.org/wiki/Open-source_software) is a minimum in security, so use a Linux live cd or something similar from a trusted source to generate and/or use your master signing key, preferably while being offline (see [live CDs](#-livecd))!
+* Specialized hardware solutions offer much better protection for secret keys.
 * If you forget the passphrase for your already published key, and you don't have a revocation certificate, then your key will be lingering on the keyservers confusing your peers, who will annoy you by sending you messages you cannot read.
-* Passphrases: three to five word long sentences (based on a non-trivial vocabulary, preferrably with s0me typ0s) are easier to remember than a bunch of random characters, and are [better passphrases](http://www.baekdal.com/insights/password-security-usability). You can even build a little story around them to have separate but semantically interconnected passphrases (for the keys, for the revocation certificate, etc.). A vivid dream or delightful fantasies can be a good basis for something you won't forget... :)
+* Passphrases: three to five word long sentences (based on a non-trivial vocabulary, preferably with s0me typ0s) are easier to remember than a bunch of random characters, and are [better passphrases](http://www.baekdal.com/insights/password-security-usability). You can even build a little story around them to have separate but semantically interconnected passphrases (for the keys, for the revocation certificate, etc.). A vivid dream or delightful fantasies can be a good basis for something you won't forget... :)
 * ...but at the end of the day it'll always be a tradeoff between security and convenience. Assess your risks and act accordingly.
 
 The PGP algorithm needs an extra parameter, a key, to sign or encrypt data. That parameter is a cryptographic keypair, usually one of the subkeys from a PGP key block. New subkeys can be freely generated and published, so [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy) can be achieved by publishing new subkeys, as long as the secret part of the master signing keypair has not been compromised. Therefore the most precious part of a PGP key block is its master signing key, because whenever new information is attached to the key block (e.g. a new _subkey_ is generated), this new data must be signed by the secret part of the master signing keypair, otherwise conforming programs will reject the new unsigned or improperly signed part of the PGP key block. This way only that person can publish valid additions to the key block who controls the secret part of the master signing key.
@@ -33,17 +31,17 @@ The aim is to generate a digital identity that can serve to identify you and to 
 Things to consider:
 
 * Longer signing keys generate longer signatures.
-* RSA signatures are longer than DSA signatures, but [there's more to this story](http://superuser.com/questions/13164/what-is-better-for-gpg-keys-rsa-or-dsa).
+* RSA signatures are longer than DSA signatures (but [there's more to this story](http://superuser.com/questions/13164/what-is-better-for-gpg-keys-rsa-or-dsa)).
 * If a valid signing subkey exists, then the master signing key is rarely used (only to sign internal parts of the key block, or when explicitly selected), so the size of the signatures it generates is not a major concern.
-* Having a strong master signing key (and taking good care of it) can provide a long time span for your digital identity (possiblt 10+ years) and for [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy).
-* It's possible to generate 8192 bit RSA signing keys (by using batch mode as this script does for the mail signing key).
+* Having a strong master signing key (and taking good care of it) can provide a long time span for your digital identity (possibly 10+ years) and for [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy).
+* It's possible to generate 8192 bit RSA signing keys (by using batch mode, as this script does for the master key).
 * Some GnuPG configuration parameters affect newly generated keys (although not in a permanent way). See _setperf_ to set the preferred hash algorithms for identities e.g. [here](https://wiki.ubuntu.com/SecurityTeam/GPGMigration).
 
-Some more thoughts [here](http://www.ctrlc.hu/~stef/blog/posts/PGP_key_generation.html).
+Even more thoughts [here](http://www.ctrlc.hu/~stef/blog/posts/PGP_key_generation.html).
 
-## Using GnuPG without keeping the secret part of your master signing key on your computer ##
+## Using GnuPG ##
 
-GnuPG has no problem working with a PGP key block that is missing the secret part of its master signing key, as long as it's not needed for an operation. Therefore it's a good idea not to store the secret part of the master signing key in the regularly used gpg home directory, but rather keep it at a safer location.
+GnuPG properly operates with a PGP key block that is missing the secret part of its master signing key, as long as it's not needed for an operation. Therefore it's a good idea not to store the secret part of the master signing key in the regularly used gpg home directory, but rather generate and handle it in a safer environment; e.g. generate and handle it using a [live CD](#-livecd) without Internet connection, and store it on a pendrive dedicated to this purpose. Then only attach it when needed (e.g. when signing other people's keys or when your own keyblock needs to be modified).
 
 This script generates (with defaults in parens):
 
@@ -56,7 +54,7 @@ This script generates (with defaults in parens):
 * generate and symmetrically encrypt a revocation certificate into the file <code>revocation-certificate-for-[keyid]-passphrase-protected.gpg</code>
 * (planned: support for [<code>ssss-split</code>](http://point-at-infinity.org/ssss/) to generate [secret sharing](http://en.wikipedia.org/wiki/Secret_sharing) to backup the master key and the revocation certificate in a distributed manner)
 
-Once the exported files have been generated you can import them into the gpg homedir's on your devices (by default <code>~/.gnupg</code>). Where you should import what depends on the level of security you want to achieve. For better security you should keep the secret part of your master signing key on an offline storage, and only attaching it to safe software environments when needed (e.g. when signing other people's keys or when your own keyblock needs to be modified). IOW, keep the private part of your master signing key away from your regularly used software environment(s):
+Once the exported files have been generated, you can import them into the gpg homedir's on your devices (by default <code>~/.gnupg</code>). Where you should import and what depends on the level of security you want to achieve, but keeping the master key offline is advised as described above.
 
         $ gpg --import secret-subkeys.gpg public-keys.gpg
         $ gpg --list-secret-keys
@@ -68,19 +66,43 @@ Once the exported files have been generated you can import them into the gpg hom
 
 (the '#' character in the output shows that the secret part of the master signing key is missing)
 
+## <a id="-hardware"></a> SmartCards and other hardware keys ##
+
+SmartCards and USB cryptographic tokens are specialized computers that perform cryptographic operations. They are designed to keep the secret keys secret even against physical attacks. They are much more secure than storing a key on a computer, but are not flawless [⁽¹⁾](http://smartfacts.cr.yp.to/) [⁽²⁾](http://www.cl.cam.ac.uk/~sjm217/papers/). Usually they can store three separate keys for signing, encryption, and authentication, and the secret keys can be either uploaded or generated on the cards.
+
+* [The OpenPGP Card version 2.0](http://www.g10code.de/p-card.html) - a SmartCard with [extensive documentation](http://www.g10code.de/docs/openpgp-card-2.0.pdf) and thus stable Linux support. You can also get one by [joining the FSFE Fellowship](http://www.fsfe.org/join). Supports three 4096 bit keys and on-card key generation[⁽¹⁾](http://shop.kernelconcepts.de/product_info.php?cPath=1_26&products_id=42).
+* [crypto-stick.com](http://www.crypto-stick.com/) - a tiny OpenSource USB computer and firmware with an integrated proprietary smart card chip. Supports [OATH TOTP](#-oath) as [described here](https://www.crypto-stick.com/2012/OATH-One-Time-Passwords-Allow-Login-to-Gmail-Dropbox-AWS).
+* [gnuk](http://www.fsij.org/gnuk/) - a portable OpenSource smart card implementation that can run on e.g. [this](http://www.seeedstudio.com/wiki/FST-01) tiny ARM based USB computer.
+
+Some laptops have internal smart card readers, and higher security external readers have their own PIN entry keyboard.
+
+Further information on using smart cards on Linux: [Debian wiki](https://wiki.debian.org/Smartcards), [Using an OpenPGP SmartCard](http://www.narf.ssji.net/~shtrom/wiki/tips/openpgpsmartcard), [OpenSC – tools and libraries for smart cards](https://github.com/OpenSC/OpenSC/wiki), [GnuPG wiki](http://wiki.gnupg.org/).
+
 ## <a id="-glossary"></a> Glossary ##
 
 * _PGP key_ - It's usually a shorthand for _PGP key block_, which will be the case in this document, too. Not to be confused with _asymmetric cryptographic keypairs_, which are merely parts of _PGP key blocks_.
-* _PGP key block_ - a complex structure of information (normally stored in ~/.gnupg/). Some of the information it can contain: multiple cryptographic (sub)keys; multiple identities (email addresses, photgraphs, etc); digital signatures on various parts of the key block (potentially made by other people's keys, e.g. signing parts of someone's key to communicate the belief to the rest of the world that its identities, and the secret part of the key belong to the same (real world) person), etc...
-* _subkey_ - _PGP key blocks_ can have, among other things, 1+ _asymmetric cryptographic keypairs_. One such _asymmetric cryptographic keypair_ is mandatory for normal operation. It's called the _master signing key_, and it's used to sign various information inside the key block, e.g. identities and/or other cryptographic keys, which are called _subkeys_.
+* _PGP key block_ - a complex structure of information (normally stored in ~/.gnupg/). Examples of the information it can contain: multiple cryptographic (sub)keys; multiple identities (email addresses, photgraphs, etc); digital signatures on various parts of the key block (potentially made by other people's keys, e.g. to communicate the belief to the rest of the world that the same real world person owns the listed digital identities, and also the secret part of the key).
+* _subkey_ - _PGP key blocks_ can have, among other things, multiple _asymmetric cryptographic keypairs_. One such _asymmetric cryptographic keypair_ is mandatory for normal operation. It's called the _master signing key_, and it's used to sign various information inside the key block, e.g. identities and/or other cryptographic keys, which are called _subkeys_.
 * _asymmetric cryptographic keypair_ - they are basically pairs of very big interconnected random numbers, one of them should be made public, while the other one should be kept secret. Asymmetric encryption algorithms use the public part to encrypt data and to verify signature blocks, while use the secret part to decrypt data and to generate signature blocks.
+* <a id="-oath"></a> [OATH](http://www.openauthentication.org/aboutOath) is short for Initiative for Open Authentication. Among other things it defines a [Time-based One-time Password (TOTP)](https://en.wikipedia.org/wiki/Time-based_One-time_Password_Algorithm) authentication standard, supported by [more and more sites](https://en.wikipedia.org/wiki/Time-based_One-time_Password_Algorithm#Public_Server_Implementations).
+* <a id="-livecd"></a>Security focused Linux Live CDs:
+  * [Tails](http://tails.boum.org/)
+  * [Privatix](http://www.mandalka.name/privatix/)
+  * [Liberté Linux](http://dee.su/liberte).
+
+## Alternatives and/or further reading ##
+
+* [gpk](https://github.com/stef/gpk)
+* [gpg-quickstart](http://www.madboa.com/geek/gpg-quickstart/)
+* [gnupg howtos](http://www.gnupg.org/documentation/howtos.en.html)
+* [Why use PGP?](http://superuser.com/a/16165/27578).
 
 ## Credits ##
 
 Written by Attila Lendvai <attila.lendvai@gmail.com> (Key fingerprint: 2FA1 A9DC 9C1E BA25 A59C  963F 5D5F 45C7 DFCD 0A39).
 
-Donations are welcome if you've found this useful:
+If you've found this useful, then tips are welcome:
 
-* Bitcoin (BTC): `1Ej8SeMNTkwjSwhKLu7H1XLVRPZ3HUjM4J` (0 BTC as of 2013-10-30)
-* Ripple (XRP): `r33NEgyd7HqvrUeB98rQ4VoBxP438gC74Q` (0 XRP as of 2013-10-30)
-* [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RTENWWNX3P9JY): (0 USD as of 2013-10-30)
+* Bitcoin (BTC): `1Ej8SeMNTkwjSwhKLu7H1XLVRPZ3HUjM4J` (0 BTC as of 2014-01-18)
+* Ripple (XRP): `r33NEgyd7HqvrUeB98rQ4VoBxP438gC74Q` (0 XRP as of 2014-01-18)
+* [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RTENWWNX3P9JY): (0 USD as of 2014-01-18)
