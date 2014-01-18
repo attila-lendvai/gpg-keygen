@@ -2,7 +2,7 @@
 
 A readme and a script to generate [PGP](http://en.wikipedia.org/wiki/Pretty_Good_Privacy) keys using [GnuPG](http://www.gnupg.org/), using the current best practices.
 
-To provide a concise and up-to-date description of best practices regarding the usage of GnuPG. A basic understanding of [public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography), and GnuPG in particular is assumed.
+Its goal is to provide a concise and up-to-date description of best practices regarding the usage of GnuPG. A basic understanding of [public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography), and GnuPG in particular is assumed.
 
 If something is not clear or you're new to PGP, then make sure to start with the [Glossary](#-glossary) below.
 
@@ -14,7 +14,7 @@ If something is not clear or you're new to PGP, then make sure to start with the
 * Having a separately stored revocation certificate in your backup comes very handy if your key gets compromised or lost. By publishing it you can tell your peers that your key should not be used anymore.
 * The most precious part of a _PGP key block_ is its _master signing key_.
 * The _master signing key_ of a _PGP key block_ is rarely needed (mostly when editing the _PGP key block_ itself and when signing other people's keys).
-* If you don't trust the software environment and/or the computer generating or using your gpg key, then you cannot trust the key and the cryptography either. [Opensource](http://en.wikipedia.org/wiki/Open-source_software) is a minimum in security, so use a Linux live cd or something similar from a trusted source to generate and/or use your master signing key, preferably while being offline (see [live CDs](#-livecd))!
+* If you don't trust the software environment and/or the computer generating or using your gpg key, then you cannot trust the key and the cryptography either. [Opensource](http://en.wikipedia.org/wiki/Open-source_software) is a minimum in security, so use a Linux live cd or something similar from a trusted source to generate and/or use your master signing key, preferably while being offline (see _live CD_'s in the [Glossary](#-glossary))!
 * Specialized hardware solutions offer much better protection for secret keys.
 * If you forget the passphrase for your already published key, and you don't have a revocation certificate, then your key will be lingering on the keyservers confusing your peers, who will annoy you by sending you messages you cannot read.
 * Passphrases: three to five word long sentences (based on a non-trivial vocabulary, preferably with s0me typ0s) are easier to remember than a bunch of random characters, and are [better passphrases](http://www.baekdal.com/insights/password-security-usability). You can even build a little story around them to have separate but semantically interconnected passphrases (for the keys, for the revocation certificate, etc.). A vivid dream or delightful fantasies can be a good basis for something you won't forget... :)
@@ -71,7 +71,7 @@ Once the exported files have been generated, you can import them into the gpg ho
 SmartCards and USB cryptographic tokens are specialized computers that perform cryptographic operations. They are designed to keep the secret keys secret even against physical attacks. They are much more secure than storing a key on a computer, but are not flawless [⁽¹⁾](http://smartfacts.cr.yp.to/) [⁽²⁾](http://www.cl.cam.ac.uk/~sjm217/papers/). Usually they can store three separate keys for signing, encryption, and authentication, and the secret keys can be either uploaded or generated on the cards.
 
 * [The OpenPGP Card version 2.0](http://www.g10code.de/p-card.html) - a SmartCard with [extensive documentation](http://www.g10code.de/docs/openpgp-card-2.0.pdf) and thus stable Linux support. You can also get one by [joining the FSFE Fellowship](http://www.fsfe.org/join). Supports three 4096 bit keys and on-card key generation[⁽¹⁾](http://shop.kernelconcepts.de/product_info.php?cPath=1_26&products_id=42).
-* [crypto-stick.com](http://www.crypto-stick.com/) - a tiny OpenSource USB computer and firmware with an integrated proprietary smart card chip. Supports [OATH TOTP](#-oath) as [described here](https://www.crypto-stick.com/2012/OATH-One-Time-Passwords-Allow-Login-to-Gmail-Dropbox-AWS).
+* [Crypto Stick](http://www.crypto-stick.com/) - a tiny OpenSource USB computer and firmware with an integrated proprietary smart card chip. Supports _OATH TOTP_ as [described here](https://www.crypto-stick.com/2012/OATH-One-Time-Passwords-Allow-Login-to-Gmail-Dropbox-AWS).
 * [gnuk](http://www.fsij.org/gnuk/) - a portable OpenSource smart card implementation that can run on e.g. [this](http://www.seeedstudio.com/wiki/FST-01) tiny ARM based USB computer.
 
 Some laptops have internal smart card readers, and higher security external readers have their own PIN entry keyboard.
@@ -84,8 +84,8 @@ Further information on using smart cards on Linux: [Debian wiki](https://wiki.de
 * _PGP key block_ - a complex structure of information (normally stored in ~/.gnupg/). Examples of the information it can contain: multiple cryptographic (sub)keys; multiple identities (email addresses, photgraphs, etc); digital signatures on various parts of the key block (potentially made by other people's keys, e.g. to communicate the belief to the rest of the world that the same real world person owns the listed digital identities, and also the secret part of the key).
 * _subkey_ - _PGP key blocks_ can have, among other things, multiple _asymmetric cryptographic keypairs_. One such _asymmetric cryptographic keypair_ is mandatory for normal operation. It's called the _master signing key_, and it's used to sign various information inside the key block, e.g. identities and/or other cryptographic keys, which are called _subkeys_.
 * _asymmetric cryptographic keypair_ - they are basically pairs of very big interconnected random numbers, one of them should be made public, while the other one should be kept secret. Asymmetric encryption algorithms use the public part to encrypt data and to verify signature blocks, while use the secret part to decrypt data and to generate signature blocks.
-* <a id="-oath"></a> [OATH](http://www.openauthentication.org/aboutOath) is short for Initiative for Open Authentication. Among other things it defines a [Time-based One-time Password (TOTP)](https://en.wikipedia.org/wiki/Time-based_One-time_Password_Algorithm) authentication standard, supported by [more and more sites](https://en.wikipedia.org/wiki/Time-based_One-time_Password_Algorithm#Public_Server_Implementations).
-* <a id="-livecd"></a>Security focused Linux Live CDs:
+* [OATH](http://www.openauthentication.org/aboutOath) is short for Initiative for Open Authentication. Among other things it defines a [Time-based One-time Password (TOTP)](https://en.wikipedia.org/wiki/Time-based_One-time_Password_Algorithm) authentication standard, supported by [more and more websites](https://en.wikipedia.org/wiki/Time-based_One-time_Password_Algorithm#Public_Server_Implementations).
+* Live CD is a bootable read-only operating system, like these security focused Linux Live CDs (bootable from USB pendrives also):
   * [Tails](http://tails.boum.org/)
   * [Privatix](http://www.mandalka.name/privatix/)
   * [Liberté Linux](http://dee.su/liberte).
