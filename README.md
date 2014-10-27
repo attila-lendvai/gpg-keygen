@@ -35,7 +35,7 @@ Things to consider:
 * If a valid signing subkey exists, then the master signing key is rarely used (only to sign internal parts of the key block, or when explicitly selected), so the size of the signatures it generates is not a major concern.
 * Having a strong master signing key (and taking good care of it) can provide a long time span for your digital identity (possibly 10+ years) and for [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy).
 * It's possible to generate 8192 bit RSA signing keys (by using batch mode, as this script does for the master key).
-* Some GnuPG configuration parameters affect newly generated keys (although not in a permanent way). See _setperf_ to set the preferred hash algorithms for identities e.g. [here](https://wiki.ubuntu.com/SecurityTeam/GPGMigration).
+* Some GnuPG configuration parameters affect newly generated keys (although not in a permanent way). See _setpref_ to set the preferred hash algorithms for identities e.g. [here](https://wiki.ubuntu.com/SecurityTeam/GPGMigration).
 
 Even more thoughts [here](http://www.ctrlc.hu/~stef/blog/posts/PGP_key_generation.html).
 
