@@ -259,7 +259,7 @@ try:
     argParser.add_argument('--temporary-directory', "-t", metavar = 'DIR', dest = 'temporaryDirectory', type = str, help = "Defaults to /run/shm/gpg-key-gen{random}. Should point to a volatile storage, or otherwise 'srm' (secure-delete) should be used for removing the sensitive data from non-volatile storage devices.")
 
     argGroup = argParser.add_argument_group(title = 'Master key')
-    argGroup.add_argument('--master-key-length',     metavar = 'BITS', dest = 'masterKeyLength',      type = int, default = 8192,  help = 'Master key length')
+    argGroup.add_argument('--master-key-length',     metavar = 'BITS', dest = 'masterKeyLength',      type = int, default = 4096,  help = 'Master key length')
     argGroup.add_argument('--master-key-type',       metavar = 'TYPE', dest = 'masterKeyType',        type = str, default = "RSA", help = 'Master key type')
     argGroup.add_argument('--master-key-expire',     metavar = 'EXP',  dest = 'masterKeyExpire',      type = str, default = "0",   help = 'Master key expiration date. Zero means never expires.')
 
