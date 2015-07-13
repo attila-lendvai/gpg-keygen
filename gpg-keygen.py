@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2012 Attila Lendvai
 #
@@ -50,7 +50,7 @@ def logException(etype, evalue, etb):
 
 def ensureDirectoryExists(path):
     if not os.path.exists(path):
-        os.makedirs(path, mode = 0700)
+        os.makedirs(path, mode = 0o700)
     return path
 
 def isEmpty(thing):
@@ -84,11 +84,13 @@ def run(command, **kwargs):
         filteredKwargs["stdin"] = subprocess.PIPE
         stdin = kwargs.get("stdin")
 
+    #log("exec'ing the following: '%s'", command)
+
     process = subprocess.Popen(command, **filteredKwargs)
     if kwargs.get("printCommand", False):
         print("# " + command)
 
-    stdout, stderr = process.communicate(input = stdin)
+    stdout, stderr = process.communicate(input = bytes(stdin, 'UTF-8'))
     if not kwargs.get("ignoreErrors", False) and process.returncode != 0:
         raise ShellCommandError(command, process.returncode, stdout, stderr)
     return stdout, stderr
@@ -108,7 +110,7 @@ def runGpgWithoutCapturing(*args, **kwargs):
 def getMasterKeyFingerprint(**kwargs):
     failIfMissing = kwargs.get("failIfMissing", True)
     output = runGpg("--with-colons --list-secret-keys").splitlines()
-    output = [line for line in output if line.startswith("sec:")]
+    output = [line for line in output if line.startswith(bytes("sec:", 'UTF-8'))]
     if len(output) > 1:
         raise UserMessageError("Multiple master keys in the secring!?")
     elif len(output) == 0:
@@ -116,15 +118,15 @@ def getMasterKeyFingerprint(**kwargs):
             raise UserMessageError("No master key found in the secring.")
         else:
             return None
-    columns = output[0].split(":")
+    columns = output[0].split(bytes(":", 'UTF-8'))
     shortFingerprint = columns[4]
 
-    output = runGpg("--with-colons --fingerprint --list-secret-keys", shortFingerprint).splitlines()
+    output = runGpg("--with-colons --fingerprint --list-secret-keys", str(shortFingerprint, 'UTF-8')).splitlines()
     assert(len(output) > 1)
-    assert(output[1].startswith("fpr:"))
-    columns = output[1].split(":")
+    assert(output[1].startswith(bytes("fpr:", 'UTF-8')))
+    columns = output[1].split(bytes(":", 'UTF-8'))
 
-    return columns[9]
+    return str(columns[9], 'UTF-8')
 
 def generateMasterKey(args):
     if getMasterKeyFingerprint(failIfMissing = False) != None:
@@ -147,7 +149,7 @@ def generateMasterKey(args):
                      "%ask-passphrase",
                      "%commit"
                  ]:
-        if type(entry) == types.TupleType:
+        if type(entry) == tuple:
             if entry[0]:
                 stdinBuffer += entry[1] + "\n"
         else:
