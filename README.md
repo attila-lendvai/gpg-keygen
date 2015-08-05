@@ -45,7 +45,7 @@ GnuPG properly operates with a PGP key block that is missing the secret part of 
 
 This script generates (with defaults in parens):
 
-* a master signing key (RSA 8192 bit, no expiration date marked)
+* a master signing key (RSA 4096 bit, no expiration date marked)
 * a subkey for signing (RSA 4096 bit, 3 years)
 * a subkey for encryption (RSA 2048 bit, 3 years)
 * export the secret part of the master signing key into the file <code>secret-master-key.gpg</code>
@@ -59,7 +59,7 @@ Once the exported files have been generated, you can import them into the gpg ho
         $ gpg --import secret-subkeys.gpg public-keys.gpg
         $ gpg --list-secret-keys
         ---------------------------------
-        sec#  8192R/ABCD1234 2010-01-01
+        sec#  4096R/ABCD1234 2010-01-01
         uid                  John Doe <john.doe@example.com>
         ssb   4096R/42AA42AA 2010-01-01 [expires: 2013-01-01]
         ssb   2048R/41BB41BB 2010-01-01 [expires: 2013-01-01]
