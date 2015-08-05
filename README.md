@@ -10,19 +10,19 @@ If something is not clear or you're new to PGP, then make sure to start with the
 
 * [Public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography) happens between two encryption **keys**, which is not necessarily only two humans, unless enough care has been taken when exchanging public keys and to keep the secret keys indeed secret.
 * In a digital networked world it's not possible to delete any published information, it must be assumed to be just there forever. This also applies to PGP keys.
-* Properly authenticated revocation requests can be published though. If such requests are [digitally signed](http://en.wikipedia.org/wiki/Digital_signature) (authenticated), then they will be honored by programs using e.g. a PGP key (key servers, client programs), and the revoked data will be ignored/hidden from the user accordingly.
+* Properly authenticated revocation requests can be published though. If such requests are [digitally signed](http://en.wikipedia.org/wiki/Digital_signature) (authenticated), then they will be honored by programs handling e.g. a PGP keys (key servers, client programs), and the revoked data will be ignored/hidden from the user accordingly.
 * Having a separately stored revocation certificate in your backup comes very handy if your key gets compromised or lost. By publishing it you can tell your peers that your key should not be used anymore.
 * The most precious part of a _PGP key block_ is its _master signing key_.
 * The _master signing key_ of a _PGP key block_ is rarely needed (mostly when editing the _PGP key block_ itself and when signing other people's keys).
-* If you don't trust the software environment and/or the computer generating or using your gpg key, then you cannot trust the key and the cryptography either. [Opensource](http://en.wikipedia.org/wiki/Open-source_software) is a minimum in security, so use a Linux live cd or something similar from a trusted source to generate and/or use your master signing key, preferably while being offline (see _live CD_'s in the [Glossary](#-glossary))!
+* If you don't trust the software environment and/or the computer generating or using your PGP key, then you cannot trust the key and the cryptography either. [Opensource](http://en.wikipedia.org/wiki/Open-source_software) is a minimum in security, so use a Linux live cd or something similar from a trusted source to generate and/or use your master signing key, preferably while being offline (see _live CD_'s in the [Glossary](#-glossary))!
 * Specialized hardware solutions offer much better protection for secret keys.
-* If you forget the passphrase for your already published key, and you don't have a revocation certificate, then your key will be lingering on the keyservers confusing your peers, who will annoy you by sending you messages you cannot read.
+* If you forget the passphrase for your already published key, and you don't have a revocation certificate either, then your key will be lingering on the keyservers confusing your peers, who will annoy you by sending you messages you cannot read.
 * Passphrases: three to five word long sentences (based on a non-trivial vocabulary, preferably with s0me typ0s) are easier to remember than a bunch of random characters, and are [better passphrases](http://www.baekdal.com/insights/password-security-usability). You can even build a little story around them to have separate but semantically interconnected passphrases (for the keys, for the revocation certificate, etc.). A vivid dream or delightful fantasies can be a good basis for something you won't forget... :)
 * ...but at the end of the day it'll always be a tradeoff between security and convenience. Assess your risks and act accordingly.
 
-The PGP algorithm needs an extra parameter, a key, to sign or encrypt data. That parameter is a cryptographic keypair, usually one of the subkeys from a PGP key block. New subkeys can be freely generated and published, so [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy) can be achieved by publishing new subkeys, as long as the secret part of the master signing keypair has not been compromised. Therefore the most precious part of a PGP key block is its master signing key, because whenever new information is attached to the key block (e.g. a new _subkey_ is generated), this new data must be signed by the secret part of the master signing keypair, otherwise conforming programs will reject the new unsigned or improperly signed part of the PGP key block. This way only that person can publish valid additions to the key block who controls the secret part of the master signing key.
+The PGP algorithm needs an extra parameter, a key, to sign or encrypt data. That parameter is a cryptographic keypair, usually one of the subkeys from a PGP key block. New subkeys can be freely generated and published, so [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy) can be achieved by publishing new subkeys, as long as the secret part of the master signing keypair has not been compromised. Therefore the most precious part of a PGP key block is its master signing key, because whenever new information is attached to the key block (e.g. a new _subkey_ is generated), this new data must be signed by the secret part of the master signing keypair, otherwise conforming programs will reject the new unsigned or improperly signed part of the PGP key block. In this scheme publishing valid additions to the key block is only possible by people who know the secret part of the master signing key. This is ideally you, and you only.
 
-So, in short: keep the secret part of your master signing key safe!
+So, to conclude: keep the secret part of your master signing key safe!
 
 ## Generating a key ##
 
@@ -30,12 +30,12 @@ The aim is to generate a digital identity that can serve to identify you and to 
 
 Things to consider:
 
-* Longer signing keys generate longer signatures.
-* RSA signatures are longer than DSA signatures (but [there's more to this story](http://superuser.com/questions/13164/what-is-better-for-gpg-keys-rsa-or-dsa)).
-* If a valid signing subkey exists, then the master signing key is rarely used (only to sign internal parts of the key block, or when explicitly selected), so the size of the signatures it generates is not a major concern.
+* If a valid signing subkey exists, then the master signing key is rarely used (only to sign internal parts of the key block itself, when explicitly selected, or when signing other people's keys), so the size of the signatures it generates is not a major concern.
 * Having a strong master signing key (and taking good care of it) can provide a long time span for your digital identity (possibly 10+ years) and for [forward secrecy](http://en.wikipedia.org/wiki/Forward_secrecy).
-* It's possible to generate 8192 bit RSA signing keys (by using batch mode, as this script does for the master key).
-* Some GnuPG configuration parameters affect newly generated keys (although not in a permanent way). See _setpref_ to set the preferred hash algorithms for identities e.g. [here](https://wiki.ubuntu.com/SecurityTeam/GPGMigration).
+* The security of RSA keys does not scale well beyond 2048 bits, use [ECC](https://en.wikipedia.org/wiki/Elliptic_curve_cryptography) (Elliptic curve cryptography) instead [as recommended](https://gnupg.org/faq/gnupg-faq.html#please_use_ecc). Unfortunately it requires GnuPG 2.1+ (2014 Nov).
+* Longer signing keys generate longer signatures.
+* Signature length: RSA > DSA = [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) (Elliptic Curve DSA) (but [there's more to this story](http://superuser.com/questions/13164/what-is-better-for-gpg-keys-rsa-or-dsa)).
+* Some GnuPG configuration parameters affect newly generated keys (although not in a permanent way); e.g. see _setpref_ to set the preferred hash algorithms for identities [here](https://wiki.ubuntu.com/SecurityTeam/GPGMigration).
 
 Even more thoughts [here](http://www.ctrlc.hu/~stef/blog/posts/PGP_key_generation.html).
 
@@ -45,7 +45,7 @@ GnuPG properly operates with a PGP key block that is missing the secret part of 
 
 This script generates (with defaults in parens):
 
-* a master signing key (RSA 8192 bit, never expires)
+* a master signing key (RSA 8192 bit, no expiration date marked)
 * a subkey for signing (RSA 4096 bit, 3 years)
 * a subkey for encryption (RSA 2048 bit, 3 years)
 * export the secret part of the master signing key into the file <code>secret-master-key.gpg</code>
@@ -68,11 +68,11 @@ Once the exported files have been generated, you can import them into the gpg ho
 
 ## <a id="-hardware"></a> SmartCards and other hardware keys ##
 
-SmartCards and USB cryptographic tokens are specialized computers that perform cryptographic operations. They are designed to keep the secret keys secret even against physical attacks. They are much more secure than storing a key on a computer, but are not flawless [⁽¹⁾](http://smartfacts.cr.yp.to/) [⁽²⁾](http://www.cl.cam.ac.uk/~sjm217/papers/). Usually they can store three separate keys for signing, encryption, and authentication, and the secret keys can be either uploaded or generated on the cards.
+SmartCards and USB cryptographic tokens are specialized simple computers that perform cryptographic operations. They are designed to keep the secret keys secret even against physical attacks. They are much more secure than storing a key on a personal computer, but they are not flawless [⁽¹⁾](http://smartfacts.cr.yp.to/) [⁽²⁾](http://www.cl.cam.ac.uk/~sjm217/papers/). Usually they can store three separate keys for signing, encryption, and authentication. The secret keys can be either uploaded or generated on the cards themselves, so that they never get exposed to less secure environments.
 
 * [The OpenPGP Card version 2.0](http://www.g10code.de/p-card.html) - a SmartCard with [extensive documentation](http://www.g10code.de/docs/openpgp-card-2.0.pdf) and thus stable Linux support. You can also get one by [joining the FSFE Fellowship](http://www.fsfe.org/join). Supports three 4096 bit keys and on-card key generation[⁽¹⁾](http://shop.kernelconcepts.de/product_info.php?cPath=1_26&products_id=42).
 * [Crypto Stick](http://www.crypto-stick.com/) - a tiny OpenSource USB computer and firmware with an integrated proprietary smart card chip. Supports _OATH TOTP_ as [described here](https://www.crypto-stick.com/2012/OATH-One-Time-Passwords-Allow-Login-to-Gmail-Dropbox-AWS).
-* [gnuk](http://www.fsij.org/gnuk/) - a portable OpenSource smart card implementation that can run on e.g. [this](http://www.seeedstudio.com/wiki/FST-01) tiny ARM based USB computer.
+* [gnuk](http://www.fsij.org/gnuk/) - a portable OpenSource implementation of the OpenPGP Card specification that can run on e.g. [this](http://www.seeedstudio.com/wiki/FST-01) tiny ARM based OpenSource USB computer.
 
 Some laptops have internal smart card readers, and higher security external readers have their own PIN entry keyboard.
 
@@ -95,7 +95,7 @@ Further information on using smart cards on Linux: [Debian wiki](https://wiki.de
 * [gpk](https://github.com/stef/gpk)
 * [gpg-quickstart](http://www.madboa.com/geek/gpg-quickstart/)
 * [gnupg howtos](http://www.gnupg.org/documentation/howtos.en.html)
-* [Why use PGP?](http://superuser.com/a/16165/27578).
+* [Why use PGP?](http://superuser.com/a/16165/27578)
 
 ## Credits ##
 
