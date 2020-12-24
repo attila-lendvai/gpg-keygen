@@ -6,6 +6,12 @@ Its goal is to provide a concise and up-to-date description of best practices re
 
 If something is not clear or you're new to PGP, then make sure to start with the [Glossary](#-glossary) below.
 
+## Status as of 2021 ##
+
+By now this has become a bit obsolete. We now have specialized devices like Trezor for our keys, and new projects are inching towards superseding the entire PGP framework.
+
+**The rest is from around 2016.**
+
 ## Some quick insights ##
 
 * [Public key cryptography](http://en.wikipedia.org/wiki/Public-key_cryptography) happens between two encryption **keys**, which is not necessarily only two humans, unless enough care has been taken when exchanging public keys and to keep the secret keys indeed secret.
@@ -99,10 +105,4 @@ Further information on using smart cards on Linux: [Debian wiki](https://wiki.de
 
 ## Credits ##
 
-Written by Attila Lendvai <attila.lendvai@gmail.com> (Key fingerprint: 2FA1 A9DC 9C1E BA25 A59C  963F 5D5F 45C7 DFCD 0A39).
-
-If you've found this useful, then tips are welcome:
-
-* Bitcoin (BTC): `1Ej8SeMNTkwjSwhKLu7H1XLVRPZ3HUjM4J` (0 BTC as of 2014-01-18)
-* Ripple (XRP): `r33NEgyd7HqvrUeB98rQ4VoBxP438gC74Q` (0 XRP as of 2014-01-18)
-* [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RTENWWNX3P9JY): (0 USD as of 2015-11-10)
+Written by Attila Lendvai <attila@lendvai.name> (Key fingerprint: 2FA1 A9DC 9C1E BA25 A59C  963F 5D5F 45C7 DFCD 0A39).
